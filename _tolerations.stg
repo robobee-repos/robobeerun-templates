@@ -1,0 +1,82 @@
+/*
+ * Adds tolerations section so the pod can run on the master nodes.
+ *
+ * Example:
+ * 
+ * import "_resources.stg"
+ * 
+ * bb-site-wordpress-yaml(parent, vars) ::= <<
+ * apiVersion: extensions/v1beta1
+ * kind: Deployment
+ * metadata:
+ *   name: wordpress
+ *   namespace: site-com
+ *   labels:
+ *     app: wordpress
+ *     tier: frontend
+ *     group: site-com
+ * spec:
+ *   replicas: 1
+ *   selector:
+ *     matchLabels:
+ *       app: wordpress
+ *       tier: frontend
+ *       group: site-com
+ *   template:
+ *     metadata:
+ *       labels:
+ *        app: wordpress
+ *         tier: frontend
+ *         group: site-com
+ *     spec:
+ *       containers:
+ *       - image: <vars.wordpress.image.name>:<vars.wordpress.image.version>
+ * ...
+ * <tolerationMasterGroup(parent, vars, vars.wordpress.allowOnMaster)>
+ * <tolerationsGroup(parent, vars, vars.wordpress.tolerations, vars.wordpress.allowOnMaster)>
+ * >>
+ */
+tolerationMasterGroup(parent, vars, allowOnMaster) ::= <<
+<if(allowOnMaster)>
+      tolerations:
+      <tolerationMasterEntry(parent, vars, allowOnMaster)>
+<endif>
+>>
+
+/*
+ * Adds toleration entry so the pod can run on the master nodes.
+ */
+tolerationMasterEntry(parent, vars, allowOnMaster) ::= <<
+<if(allowOnMaster)>
+- effect: NoSchedule
+  key: node-role.kubernetes.io/master
+  operator: Equal
+<endif>
+>>
+
+/*
+ * Adds tolerations.
+ *
+ * Mandatory:
+ *
+ * tolerations[].key
+ * tolerations[].effect
+ * tolerations[].value
+ */
+tolerationsGroup(parent, vars, tolerations, allowOnMaster) ::= <<
+<tolerationsHeader(parent, vars, tolerations, allowOnMaster)>
+  <tolerations:tolerationsEntry();separator="\n">
+>>
+
+tolerationsHeader(parent, vars, tolerations, allowOnMaster) ::= <%
+<if(!allowOnMaster&&tolerations)>
+tolerations:
+<endif>
+%>
+
+tolerationsEntry(toleration) ::= <<
+- effect: <toleration.effect>
+  key: <toleration.key>
+  operator: <if(toleration.value)>Equal<else>Exists<endif><if(toleration.value)>
+  value: <toleration.value><endif>
+>>

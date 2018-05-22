@@ -1,0 +1,52 @@
+/*
+ * Adds readiness and liveless probes to Nginx.
+ * 
+ * Example:
+ * 
+ * import "_nginx_probe.stg"
+ * 
+ * cc-nginx-deploy-yaml(parent, vars) ::= <<
+ * apiVersion: extensions/v1beta1
+ * kind: Deployment
+ * ...
+ *       - image: <vars.nginx.image.name>:<vars.nginx.image.version>
+ *         name: nginx
+ *         ports:
+ *         - containerPort: 8080
+ *           name: "http"
+ *        <nginxReadinessProbe(parent, vars, vars.nginx.initialDelaySeconds)>
+ * ...
+ * >>
+ */
+
+/*
+ *
+ */
+nginxReadinessProbe(parent, vars, nginx) ::= <<
+livenessProbe:
+  tcpSocket:
+    port: 8080
+  initialDelaySeconds: <nginx.initialDelaySeconds>
+  periodSeconds: 60
+  timeoutSeconds: 10
+readinessProbe:
+  httpGet:
+    path: /
+    port: 8080
+    <httpHeaders(nginx.httpHeaders)>
+  initialDelaySeconds: 60
+  periodSeconds: 60
+  timeoutSeconds: 10
+>>
+
+httpHeaders(headers) ::= <<
+<if(headers)>
+httpHeaders:
+  <headers:httpHeader()>
+<endif>
+>>
+
+httpHeader(header) ::= <<
+- name: <header.name>
+  value: <header.value>
+>>

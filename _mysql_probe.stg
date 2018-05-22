@@ -1,0 +1,44 @@
+/*
+ * Adds readuness and liveless probes to Mariadb/MySQL.
+ * 
+ * Example:
+ * 
+ * import "_mysql_probe.stg"
+ * 
+ * cc-db-deploy-yaml(parent, vars) ::= <<
+ * apiVersion: extensions/v1beta1
+ * kind: Deployment
+ * ...
+ * <mariadbReadinessProbe(parent, vars)>
+ * ...
+ * >>
+ */
+
+/*
+ *
+ */
+mariadbReadinessProbe(parent, vars) ::= <<
+<mysqlReadinessProbe(parent, vars)>
+>>
+
+/*
+ *
+ */
+mysqlReadinessProbe(parent, vars) ::= <<
+livenessProbe:
+  tcpSocket:
+    port: 3306
+  initialDelaySeconds: 30
+  periodSeconds: 60
+  timeoutSeconds: 10
+readinessProbe:
+  exec:
+    command:
+    - /bin/sh
+    - -i
+    - -c
+    - MYSQL_PWD="$MARIADB_PASSWORD" mysql -h 127.0.0.1 -u $MARIADB_USER -D $MARIADB_DATABASE -e 'SELECT 1'
+  initialDelaySeconds: 30
+  periodSeconds: 60
+  timeoutSeconds: 10
+>>

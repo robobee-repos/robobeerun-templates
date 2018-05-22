@@ -1,0 +1,44 @@
+/*
+ * Adds readiness and liveless probes to PostgreSQL.
+ * 
+ * Example:
+ * 
+ * import "_postgres_probe.stg"
+ * 
+ * cc-db-deploy-yaml(parent, vars) ::= <<
+ * apiVersion: extensions/v1beta1
+ * kind: Deployment
+ * metadata:
+ *   name: postgres
+ *   namespace: anrisoftware-com
+ * spec:
+ *   replicas: 1
+ *   template:
+ *     spec:
+ *       containers:
+ *       - image: <vars.postgres.image.name>:<vars.postgres.image.version>
+ *         name: postgres
+ *         <postgresReadinessProbe(parent, vars)>
+ * ...
+ * >>
+ */
+
+/*
+ *
+ */
+postgresReadinessProbe(parent, vars) ::= <<
+readinessProbe:
+  timeoutSeconds: 3
+  initialDelaySeconds: 5
+  exec:
+    command:
+    - "/bin/sh"
+    - "-i"
+    - "-c"
+    - psql -h 127.0.0.1 -U $POSTGRES_USER -q -d $POSTGRES_DB -c 'SELECT 1'
+livenessProbe:
+  timeoutSeconds: 1
+  initialDelaySeconds: 300
+  tcpSocket:
+    port: 5432
+>>

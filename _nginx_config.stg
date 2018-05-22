@@ -1,0 +1,253 @@
+/*
+ * Nginx configuration snippets.
+ * 
+ * Example for Redmine:
+ *
+ * import "_nginx_config.stg"
+ * 
+ * cc-redmine-app-deploy-yaml(parent, vars) ::= <<
+ * apiVersion: v1
+ * kind: ConfigMap
+ * metadata:
+ *   name: redmine-nginx-<vars.revision>
+ *   namespace: site-com
+ *   labels:
+ *     app: nginx
+ *     tier: frontend
+ *     group: site-com
+ * data:
+ *   nginx.conf: |
+ *     <nginxDefaults(parent, vars, vars.nginx)>
+ *     http {
+ *         <nginxHttpDefaults(parent, vars, vars.nginx)>
+ *         upstream backend {
+ *             server 127.0.0.1:3000 max_fails=3 fail_timeout=<vars.nginx.readTimeout>;
+ *         }
+ *         <nginxVirtualHosts(parent, vars, vars.nginx.hosts)>
+ *         server {
+ *             listen 8080 default_server;
+ *             listen [::]:8080 default_server;
+ *             server_name <first(vars.nginx.hosts)>;
+ *             root /var/www/html/public;
+ *             index index.php;
+ *             <nginxLocationFavicon(parent, vars)>
+ *             <nginxLocationRobots(parent, vars)>
+ *             <nginxLocationHidden(parent, vars)>
+ *             <nginxLocationGitFiles(parent, vars)>
+ *             ## All static files will be served directly.
+ *             location ~* ^(?:(?:help\/)|(?:images\/)|(?:javascripts\/)|(?:plugin_assets\/)|(?:stylesheets\/)|(?:themes\/)).+\.(?:css|js|jpe?g|gif|htc|ico|png|html)$ {
+ *                 <nginxLocationStaticFilesConfig(parent, vars)>
+ *             }
+ *             <nginxRootProxyPassBackendLocation(parent, vars, vars.nginx)>
+ *         }
+ *     }
+ * 
+ * >>
+ */
+
+/*
+ * Mandatory:
+ *
+ * nginx.workerProcesses
+ * nginx.workerConnections
+ *
+ */
+nginxDefaults(parent, vars, nginx) ::= <<
+worker_processes <nginx.workerProcesses>;
+error_log /var/log/nginx/error.log warn;
+pid /var/run/nginx.pid;
+events {
+  worker_connections  <nginx.workerConnections>;
+}
+>>
+
+/*
+ * Mandatory:
+ * 
+ * nginx.clientMaxBodySize
+ *
+ */
+nginxHttpDefaults(parent, vars, nginx) ::= <<
+include /etc/nginx/mime.types;
+default_type application/octet-stream;
+log_format   main '$remote_addr - $remote_user [$time_local]  $status '
+    '"$request" $body_bytes_sent "$http_referer" '
+    '"$http_user_agent" "$http_x_forwarded_for"';
+log_format upstream_time '$remote_addr - $remote_user [$time_local] '
+                          '"$request" $status $body_bytes_sent '
+                          '"$http_referer" "$http_user_agent" '
+                          '$request_time upstream_connect_time upstream_header_time $upstream_response_time';
+access_log /var/log/nginx/access.log  main;
+access_log /var/log/nginx/access-upstream-time.log.gz  upstream_time gzip flush=5m;
+sendfile on;
+tcp_nopush on;
+tcp_nodelay on;
+keepalive_timeout 65;
+index index.php index.html index.htm;
+client_max_body_size <nginx.clientMaxBodySize>;
+set_real_ip_from 10.0.0.0/8;
+real_ip_header X-Forwarded-For;
+>>
+
+/*
+ *
+ */
+nginxHttpServerSecurityHeaders(parent, vars) ::= <<
+# Add headers to serve security related headers
+# Before enabling Strict-Transport-Security headers please read into this
+# topic first.
+# add_header Strict-Transport-Security "max-age=15768000;
+# includeSubDomains; preload;";
+#
+# WARNING: Only add the preload option once you read about
+# the consequences in https://hstspreload.org/. This option
+# will add the domain to a hardcoded list that is shipped
+# in all major browsers and getting removed from this list
+# could take several months.
+add_header X-Content-Type-Options nosniff;
+add_header X-XSS-Protection "1; mode=block";
+add_header X-Robots-Tag none;
+add_header X-Download-Options noopen;
+add_header X-Permitted-Cross-Domain-Policies none;
+>>
+
+/*
+ * Mandatory:
+ *
+ * nginx.readTimeout
+ *
+ */
+nginxRootProxyPassBackendLocationConfig(parent, vars, nginx) ::= <<
+proxy_read_timeout      <nginx.readTimeout>;
+proxy_connect_timeout   <nginx.readTimeout>;
+proxy_redirect      off;
+proxy_http_version  1.1;
+proxy_set_header    Host $http_host;
+proxy_set_header    X-Real-IP           $remote_addr;
+proxy_set_header    X-Forwarded-For     $proxy_add_x_forwarded_for;
+proxy_set_header    X-Forwarded-Proto   $scheme;
+proxy_pass          http://backend;
+>>
+
+/*
+ * 
+ */
+nginxVirtualHosts(parent, vars, hosts) ::= <<
+  <rest(hosts):redirectHost(parent, vars, hosts);separator="\n">
+>>
+
+/*
+ * 
+ */
+redirectHost(host, parent, vars, hosts) ::= <<
+server {
+  root /var/www/html;
+  listen 8080;
+  listen [::]:8080;
+  server_name <host>;
+  return 301 https://<first(hosts)>$request_uri;
+}
+>>
+
+/*
+ *
+ */
+nginxDefaultLocations(parent, vars) ::= <<
+<nginxLocationStaticFiles(parent, vars)>
+<nginxLocationFavicon(parent, vars)>
+<nginxLocationRobots(parent, vars)>
+<nginxLocationHidden(parent, vars)>
+>>
+
+/*
+ *
+ */
+nginxRootProxyPassBackendLocation(parent, vars, nginx) ::= <<
+#
+location / {
+  <nginxRootProxyPassBackendLocationConfig(parent, vars, nginx)>
+}
+>>
+
+/*
+ *
+ */
+nginxLocationStaticFiles(parent, vars) ::= <<
+## All static files will be served directly.
+location ~* ^.+\.(?:css|js|jpe?g|gif|htc|ico|png|html)$ {
+    <nginxLocationStaticFilesConfig(parent, vars)>
+}
+>>
+
+/*
+ *
+ */
+nginxLocationStaticFilesConfig(parent, vars) ::= <<
+#access_log off;
+expires 30d;
+## No need to bleed constant updates.
+## Send the all shebang in one fell swoop.
+tcp_nodelay off;
+## Set the OS file cache.
+open_file_cache max=3000 inactive=120s;
+open_file_cache_valid 45s;
+open_file_cache_min_uses 2;
+open_file_cache_errors off;
+>>
+
+/*
+ *
+ */
+nginxLocationFavicon(parent, vars) ::= <<
+## Support for favicon.
+## Return an 1x1 transparent GIF if it doesn't exist.
+location = /favicon.ico {
+    expires 30d;
+    try_files /favicon.ico @empty;
+    access_log off;
+}
+## Return an in memory 1x1 transparent GIF.
+location @empty {
+    expires 30d;
+    empty_gif;
+    access_log off;
+}
+>>
+
+
+/*
+ *
+ */
+nginxLocationRobots(parent, vars) ::= <<
+#
+location = /robots.txt {
+  allow all;
+  log_not_found off;
+  access_log off;
+}
+>>
+
+nginxLocationHidden(parent, vars) ::= <<
+# Deny all attempts to access hidden files such as .htaccess, .htpasswd, .DS_Store (Mac).
+# Keep logging the requests to parse later (or to pass to firewall utilities such as fail2ban)
+location ~ /\. {
+  deny all;
+}
+>>
+
+nginxLocationGitFiles(parent, vars) ::= <<
+## Protect .git files.
+location ^~ /.git {
+    return 404;
+}
+>>
+
+nginxLocationPhpPing(parent, vars) ::= <<
+# php-fpm ping and status.
+location ~ ^/(phpstatus|ping)$ {
+    fastcgi_pass   backend;
+    fastcgi_param PATH_TRANSLATED $document_root$fastcgi_script_name;
+    include        fastcgi_params;
+}
+>>
+

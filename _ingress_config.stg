@@ -1,0 +1,88 @@
+/*
+ * Add nginx ingress configuration.
+ * 
+ * Example:
+ * 
+ * import "_ingress_config.stg"
+ * 
+ * xx-site-ingress-yaml(parent, vars) ::= <<
+ * apiVersion: extensions/v1beta1
+ * kind: Ingress
+ * metadata:
+ *   name: site
+ *   namespace: site-com
+ *   labels:
+ *     app: site
+ *     tier: frontend
+ *     deployment: site
+ *   annotations:
+ *     <ingressDefaultAnnotations(parent, vars, vars.site.nginx)>
+ * spec:
+ *   <ingressDefaultSpec(parent, vars, vars.nginx, "wordpress")>
+ * 
+ */
+
+/*
+ * Mandatory:
+ *
+ * nginx.clientMaxBodySize
+ *
+ */
+ingressDefaultAnnotations(parent, vars, nginx) ::= <<
+kubernetes.io/ingress.class: "nginx"
+nginx.ingress.kubernetes.io/affinity: "cookie"
+nginx.ingress.kubernetes.io/session-cookie-name: "route"
+nginx.ingress.kubernetes.io/session-cookie-hash: "sha1"
+nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
+nginx.org/client-max-body-size: "<nginx.clientMaxBodySize>"
+>>
+
+/*
+ * Mandatory:
+ *
+ * nginx.hosts
+ *
+ */
+ingressDefaultSpec(parent, vars, nginx, name) ::= <<
+tls:
+- hosts:
+  <nginx.hosts:{h|- <h>};separator="\n">
+  secretName: <name>-tls
+rules:
+  <nginx.hosts:hostRule(name);separator="\n">
+>>
+
+hostRule(host, name) ::= <<
+- host: <host>
+  http:
+    paths:
+    - path: /
+      backend:
+        serviceName: <name>
+        servicePort: 8080
+>>
+
+/*
+ * Mandatory:
+ *
+ */
+ingressService(parent, vars, namespace, app, name) ::= <<
+apiVersion: v1
+kind: Service
+metadata:
+  name: <name>
+  namespace: <namespace>
+  labels:
+    app: <app>
+    tier: frontend
+    group: <namespace>
+spec:
+  ports:
+  - name: "http"
+    port: 8080
+    targetPort: 8080
+  selector:
+    app: <app>
+
+>>
+
