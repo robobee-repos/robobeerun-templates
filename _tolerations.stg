@@ -65,7 +65,7 @@ tolerationMasterEntry(parent, vars, allowOnMaster) ::= <<
  */
 tolerationsGroup(parent, vars, tolerations, allowOnMaster) ::= <<
 <tolerationsHeader(parent, vars, tolerations, allowOnMaster)>
-  <tolerations:tolerationsEntry();separator="\n">
+  <tolerations:tolerationEntry();separator="\n">
 >>
 
 tolerationsHeader(parent, vars, tolerations, allowOnMaster) ::= <%
@@ -74,7 +74,11 @@ tolerations:
 <endif>
 %>
 
-tolerationsEntry(toleration) ::= <<
+tolerationEntries(parent, vars, tolerations) ::= <<
+<tolerations:tolerationEntry();separator="\n">
+>>
+
+tolerationEntry(toleration) ::= <<
 - effect: <toleration.effect>
   key: <toleration.key>
   operator: <if(toleration.value)>Equal<else>Exists<endif><if(toleration.value)>
