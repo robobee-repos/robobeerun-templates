@@ -65,7 +65,7 @@ tolerationMasterEntry(parent, vars, allowOnMaster) ::= <<
  */
 tolerationsGroup(parent, vars, tolerations, allowOnMaster) ::= <<
 <tolerationsHeader(parent, vars, tolerations, allowOnMaster)>
-  <tolerations:tolerationEntry();separator="\n">
+  <tolerationEntries(parent, vars, tolerations)>
 >>
 
 tolerationsHeader(parent, vars, tolerations, allowOnMaster) ::= <%
