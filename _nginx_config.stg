@@ -1,6 +1,47 @@
 /*
  * Nginx configuration snippets.
  * 
+ * Example for Wordpress:
+ *
+ * import "_nginx_config.stg"
+ * 
+ * cc-wordpress-deploy-yaml(parent, vars) ::= <<
+ * apiVersion: v1
+ * kind: ConfigMap
+ * metadata:
+ *   name: wordpress-nginx-<vars.revision>
+ *   namespace: site-com
+ *   labels:
+ *     app: nginx
+ *     tier: frontend
+ *     group: site-com
+ * data:
+ *   nginx.conf: |
+ *     <nginxDefaults(parent, vars, vars.nginx)>
+ *     http {
+ *         <nginxHttpDefaults(parent, vars, vars.nginx)>
+ *         <nginxVirtualHosts(parent, vars, vars.nginx.hosts)>
+ *         server {
+ *             listen 8080 default_server;
+ *             listen [::]:8080 default_server;
+ *             server_name <first(vars.nginx.hosts)>;
+ *             root /var/www/html/public;
+ *             index index.php;
+ *             <nginxLocationFavicon(parent, vars)>
+ *             <nginxLocationRobots(parent, vars)>
+ *             <nginxLocationHidden(parent, vars)>
+ *             <nginxLocationUpload(parent, vars)>
+ *             ## All static files will be served directly.
+ *             location ~* \.(js|css|png|jpg|jpeg|gif|ico)$ {
+ *                 <nginxLocationStaticFilesConfig(parent, vars)>
+ *             }
+ *             <nginxRootFastcgiPassLocation(parent, vars, vars.wordpress)>
+ *             <nginxLocationPhpPingLocation(parent, vars)>
+ *         }
+ *     }
+ * 
+ * >>
+ * 
  * Example for Redmine:
  *
  * import "_nginx_config.stg"
@@ -242,10 +283,42 @@ location ^~ /.git {
 }
 >>
 
-nginxLocationPhpPing(parent, vars) ::= <<
+nginxLocationUpload(parent, vars) ::= <<
+# Deny access to any files with a .php extension in the uploads directory
+# Works in sub-directory installs and also in multisite network
+# Keep logging the requests to parse later (or to pass to firewall utilities such as fail2ban)
+location ~* /(?:uploads|files)/.*\.php$ {
+    deny all;
+}
+>>
+
+/*
+ * Mandatory:
+ * 
+ * nginx.php.maxExecutionTime
+ */
+nginxRootFastcgiPassLocation(parent, vars, nginx) ::= <<
+# First attempt to serve request as file, then
+# as directory, then try php script.
+location / {
+    try_files $uri $uri/ /index.php?$args;
+}
+# pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
+#
+location ~ \.php$ {
+fastcgi_pass   127.0.0.1:9000;
+fastcgi_index  index.php;
+fastcgi_param PATH_TRANSLATED $document_root$fastcgi_script_name;
+include        fastcgi_params;
+fastcgi_read_timeout <nginx.php.maxExecutionTime>;
+fastcgi_send_timeout <nginx.php.maxExecutionTime>;
+}
+>>
+
+nginxLocationPhpPingLocation(parent, vars) ::= <<
 # php-fpm ping and status.
 location ~ ^/(phpstatus|ping)$ {
-    fastcgi_pass   backend;
+    fastcgi_pass   127.0.0.1:9000;
     fastcgi_param PATH_TRANSLATED $document_root$fastcgi_script_name;
     include        fastcgi_params;
 }
