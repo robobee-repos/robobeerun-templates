@@ -32,14 +32,14 @@
  *       containers:
  *       - image: <vars.wordpress.image.name>:<vars.wordpress.image.version>
  * ...
- * <tolerationMasterGroup(parent, vars, vars.wordpress.allowOnMaster)>
- * <tolerationsGroup(parent, vars, vars.wordpress.tolerations, vars.wordpress.allowOnMaster)>
+ *       <tolerationMasterGroup(parent, vars, vars.wordpress.allowOnMaster)>
+ *       <tolerationsGroup(parent, vars, vars.wordpress.tolerations, vars.wordpress.allowOnMaster)>
  * >>
  */
 tolerationMasterGroup(parent, vars, allowOnMaster) ::= <<
 <if(allowOnMaster)>
-      tolerations:
-      <tolerationMasterEntry(parent, vars, allowOnMaster)>
+tolerations:
+  <tolerationMasterEntry(parent, vars, allowOnMaster)>
 <endif>
 >>
 

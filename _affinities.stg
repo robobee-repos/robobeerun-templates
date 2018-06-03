@@ -41,13 +41,13 @@
  *       containers:
  *       - image: <vars.wordpress.image.name>:<vars.wordpress.image.version>
  * ...
- * <affinitiesGroup(parent, vars, vars.wordpress.affinity)>
+ *       <affinitiesGroup(parent, vars, vars.wordpress.affinity)>
  * >>
  * 
  */
 affinitiesGroup(parent, vars, affinity) ::= <<
 <if(affinity)>
-      <affinitiesSection(parent, vars, affinity)>
+<affinitiesSection(parent, vars, affinity)>
 <endif>
 >>
 
