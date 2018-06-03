@@ -1,6 +1,12 @@
 /*
  * Adds readiness and liveless probes to Nginx.
  * 
+ * Optional:
+ * 
+ * nginx.initialDelaySeconds
+ * nginx.httpHeaders[].name
+ * nginx.httpHeaders[].value
+ * 
  * Example:
  * 
  * import "_nginx_probe.stg"
@@ -26,7 +32,7 @@ nginxReadinessProbe(parent, vars, nginx) ::= <<
 livenessProbe:
   tcpSocket:
     port: 8080
-  initialDelaySeconds: <nginx.initialDelaySeconds>
+  initialDelaySeconds: <if(nginx.initialDelaySeconds)><nginx.initialDelaySeconds><else>60<endif>
   periodSeconds: 60
   timeoutSeconds: 10
 readinessProbe:
