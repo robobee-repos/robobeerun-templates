@@ -45,11 +45,11 @@
  * >>
  * 
  */
-affinitiesGroup(parent, vars, affinity) ::= <<
+affinitiesGroup(parent, vars, affinity) ::= <%
 <if(affinity)>
 <affinitiesSection(parent, vars, affinity)>
 <endif>
->>
+%>
 
 /*
  * Adds affinity section.
