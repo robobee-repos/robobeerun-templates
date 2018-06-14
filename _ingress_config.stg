@@ -68,7 +68,7 @@ hostRule(host, name) ::= <<
  * nginx.port
  *
  */
-ingressService(parent, vars, namespace, app, name) ::= <<
+ingressService(parent, vars, nginx, namespace, app, name) ::= <<
 apiVersion: v1
 kind: Service
 metadata:
