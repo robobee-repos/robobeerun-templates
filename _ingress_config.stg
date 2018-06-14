@@ -41,7 +41,7 @@ nginx.org/client-max-body-size: "<nginx.clientMaxBodySize>"
  * Mandatory:
  *
  * nginx.hosts
- *
+ * 
  */
 ingressDefaultSpec(parent, vars, nginx, name) ::= <<
 tls:
@@ -63,7 +63,9 @@ hostRule(host, name) ::= <<
 >>
 
 /*
- * Mandatory:
+ * Optionally:
+ * 
+ * nginx.port
  *
  */
 ingressService(parent, vars, namespace, app, name) ::= <<
@@ -80,7 +82,7 @@ spec:
   ports:
   - name: "http"
     port: 8080
-    targetPort: 8080
+    targetPort: <if(nginx.port)><nginx.port><else>8080<endif>
   selector:
     app: <app>
 
