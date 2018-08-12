@@ -23,33 +23,42 @@
  */
 
 /*
+ * Creates the ingress annotations.
+ * 
  * Mandatory:
  *
- * nginx.clientMaxBodySize
+ * vars.clientMaxBodySize
  *
  */
-ingressDefaultAnnotations(parent, vars, nginx) ::= <<
+ingressDefaultAnnotations(vars) ::= <<
 kubernetes.io/ingress.class: "nginx"
 nginx.ingress.kubernetes.io/affinity: "cookie"
 nginx.ingress.kubernetes.io/session-cookie-name: "route"
 nginx.ingress.kubernetes.io/session-cookie-hash: "sha1"
 nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
-nginx.org/client-max-body-size: "<nginx.clientMaxBodySize>"
+nginx.org/client-max-body-size: "<vars.clientMaxBodySize>"
 >>
 
 /*
+ * Creates the ingress specification based on the hosts.
+ * 
+ * Parameters:
+ * 
+ * vars additional variables.
+ * name the name of the service.
+ * 
  * Mandatory:
  *
- * nginx.hosts
+ * vars.hosts
  * 
  */
-ingressDefaultSpec(parent, vars, nginx, name) ::= <<
+ingressDefaultSpec(vars, name) ::= <<
 tls:
 - hosts:
-  <nginx.hosts:{h|- <h>};separator="\n">
+  <vars.hosts:{h|- <h>};separator="\n">
   secretName: <name>-tls
 rules:
-  <nginx.hosts:hostRule(name);separator="\n">
+  <vars.hosts:hostRule(name);separator="\n">
 >>
 
 hostRule(host, name) ::= <<
