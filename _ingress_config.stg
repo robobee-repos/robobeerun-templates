@@ -63,12 +63,21 @@ hostRule(host, name) ::= <<
 >>
 
 /*
+ * Creates the service that is used by the ingress to access the application.
+ * 
+ * Parameters:
+ * 
+ * vars additional variables.
+ * name the name of the service.
+ * app the name of the application.
+ * namespace the namespace of the service.
+ * 
  * Optionally:
  * 
- * nginx.port
- *
+ * vars.port the application port, defaults to 8080.
+ * 
  */
-ingressService(parent, vars, nginx, namespace, app, name) ::= <<
+ingressService(vars, name, app, namespace) ::= <<
 apiVersion: v1
 kind: Service
 metadata:
@@ -82,7 +91,7 @@ spec:
   ports:
   - name: "http"
     port: 8080
-    targetPort: <if(nginx.port)><nginx.port><else>8080<endif>
+    targetPort: <if(vars.port)><vars.port><else>8080<endif>
   selector:
     app: <app>
 
