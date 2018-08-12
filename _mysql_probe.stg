@@ -27,7 +27,7 @@ mysqlReadinessProbe(parent, vars) ::= <<
 livenessProbe:
   tcpSocket:
     port: 3306
-  initialDelaySeconds: 30
+  initialDelaySeconds: <if(vars.initialDelaySeconds)><vars.initialDelaySeconds><else>30<endif>
   periodSeconds: 60
   timeoutSeconds: 10
 readinessProbe:
@@ -37,7 +37,7 @@ readinessProbe:
     - -i
     - -c
     - MYSQL_PWD="$MARIADB_PASSWORD" mysql -h 127.0.0.1 -u $MARIADB_USER -D $MARIADB_DATABASE -e 'SELECT 1'
-  initialDelaySeconds: 30
+  initialDelaySeconds: <if(vars.initialDelaySeconds)><vars.initialDelaySeconds><else>30<endif>
   periodSeconds: 60
   timeoutSeconds: 10
 >>
