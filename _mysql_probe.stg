@@ -36,7 +36,7 @@ readinessProbe:
     - /bin/sh
     - -i
     - -c
-    - MYSQL_PWD="$MARIADB_PASSWORD" mysql -h 127.0.0.1 -u $MARIADB_USER -D $MARIADB_DATABASE -e 'SELECT 1'
+    - MYSQL_PWD="$MYSQL_PASSWORD" mysql -h 127.0.0.1 -u $MYSQL_USER -D $MYSQL_DATABASE -e 'SELECT 1'
   initialDelaySeconds: <if(vars.initialDelaySeconds)><vars.initialDelaySeconds><else>30<endif>
   periodSeconds: 60
   timeoutSeconds: 10
