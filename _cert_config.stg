@@ -1,7 +1,7 @@
 /*
  * Mandatory:
  *
- * nginx.hosts
+ * vars.hosts
  * 
  * Example:
  * 
@@ -14,38 +14,38 @@
  *   name: site-com
  *   namespace: site-com
  * spec:
- *   <certDefaultSpecProd(parent, vars, vars.nginx, "site-com")>
+ *   <certDefaultSpecProd(vars.nginx, "site-com")>
  *
  * >>
  */
-certDefaultSpecProd(parent, vars, nginx, name) ::= <<
-<certDefaultSpecStage(parent, vars, nginx, name, "prod")>
+certDefaultSpecProd(vars, name) ::= <<
+<certDefaultSpecStage(vars, name, "prod")>
 >>
 
-certDefaultSpecStaging(parent, vars, nginx, name) ::= <<
-<certDefaultSpecStage(parent, vars, nginx, name, "staging")>
+certDefaultSpecStaging(vars, name) ::= <<
+<certDefaultSpecStage(vars, name, "staging")>
 >>
 
 /*
  * Mandatory:
  *
- * nginx.hosts
+ * vars.hosts
  *
  */
-certDefaultSpecStage(parent, vars, nginx, name, stage) ::= <<
+certDefaultSpecStage(vars, name, stage) ::= <<
 secretName: <name>-tls
 issuerRef:
   name: letsencrypt-<stage>
   kind: ClusterIssuer
-commonName: <first(nginx.hosts)>
+commonName: <first(vars.hosts)>
 dnsNames:
-<rest(nginx.hosts):certDomain();separator="\n">
+<rest(vars.hosts):certDomain();separator="\n">
 acme:
   config:
   - http01:
       ingressClass: nginx
     domains:
-    <nginx.hosts:certDomain();separator="\n">
+    <vars.hosts:certDomain();separator="\n">
 
 >>
 
