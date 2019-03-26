@@ -25,7 +25,7 @@
 /*
  * Creates the ingress annotations.
  * 
- * Mandatory:
+ * Optional:
  *
  * vars.clientMaxBodySize
  *
@@ -36,7 +36,7 @@ nginx.ingress.kubernetes.io/affinity: "cookie"
 nginx.ingress.kubernetes.io/session-cookie-name: "route"
 nginx.ingress.kubernetes.io/session-cookie-hash: "sha1"
 nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
-nginx.org/client-max-body-size: "<vars.clientMaxBodySize>"
+<if(vars.clientMaxBodySize)>nginx.org/client-max-body-size: "<vars.clientMaxBodySize>"<endif>
 >>
 
 /*
@@ -49,7 +49,10 @@ nginx.org/client-max-body-size: "<vars.clientMaxBodySize>"
  * 
  * Mandatory:
  *
- * vars.hosts
+ * vars.hosts[]
+ *     the list of hosts.
+ * name
+ *     the service name.
  * 
  */
 ingressDefaultSpec(vars, name) ::= <<
@@ -74,16 +77,21 @@ hostRule(host, name) ::= <<
 /*
  * Creates the service that is used by the ingress to access the application.
  * 
- * Parameters:
+ * Mandatory:
  * 
- * vars additional variables.
- * name the name of the service.
- * app the name of the application.
- * namespace the namespace of the service.
+ * vars
+ *     additional variables.
+ * name
+ *     the name of the service.
+ * app
+ *     the name of the application.
+ * namespace
+ *     the namespace of the service.
  * 
- * Optionally:
+ * Optional:
  * 
- * vars.port the application port, defaults to 8080.
+ * vars.port
+ *     the application port, defaults to 8080.
  * 
  */
 ingressService(vars, name, app, namespace) ::= <<
@@ -94,8 +102,6 @@ metadata:
   namespace: <namespace>
   labels:
     app: <app>
-    tier: frontend
-    group: <namespace>
 spec:
   ports:
   - name: "http"

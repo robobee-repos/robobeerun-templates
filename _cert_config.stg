@@ -18,24 +18,74 @@
  *
  * >>
  */
-certDefaultSpecProd(vars, name) ::= <<
-<certDefaultSpecStage(vars, name, "prod")>
->>
 
-certDefaultSpecStaging(vars, name) ::= <<
-<certDefaultSpecStage(vars, name, "staging")>
+/*
+ * Mandatory:
+ *
+ * vars.hosts[]
+ *     the list of hosts.
+ * name
+ *     the secret name.
+ * 
+ */
+certDefaultSpecLetsencryptProd(vars, name) ::= <<
+<certDefaultSpecLetsencryptStage(vars, name, "prod")>
 >>
 
 /*
  * Mandatory:
  *
- * vars.hosts
- *
+ * vars.hosts[]
+ *     the list of hosts.
+ * name
+ *     the secret name.
+ * 
  */
-certDefaultSpecStage(vars, name, stage) ::= <<
+certDefaultSpecLetsencryptStaging(vars, name) ::= <<
+<certDefaultSpecLetsencryptStage(vars, name, "staging")>
+>>
+
+/*
+ * Mandatory:
+ *
+ * vars.hosts[]
+ *     the list of hosts.
+ * name
+ *     the secret name.
+ * stage
+ *     the stage, either 'prod' or 'staging'.
+ */
+certDefaultSpecLetsencryptStage(vars, name, stage) ::= <<
 secretName: <name>-tls
 issuerRef:
   name: letsencrypt-<stage>
+  kind: ClusterIssuer
+commonName: <first(vars.hosts)>
+dnsNames:
+<rest(vars.hosts):certDomain();separator="\n">
+acme:
+  config:
+  - http01:
+      ingressClass: nginx
+    domains:
+    <vars.hosts:certDomain();separator="\n">
+
+>>
+
+/*
+ * Mandatory:
+ *
+ * vars.hosts[]
+ *     the list of hosts.
+ * name
+ *     the secret name.
+ * issuer
+ *     the issuer name.
+ */
+certDefaultSpec(vars, name, issuer) ::= <<
+secretName: <name>-tls
+issuerRef:
+  name: <issuer>
   kind: ClusterIssuer
 commonName: <first(vars.hosts)>
 dnsNames:
