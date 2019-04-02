@@ -1,0 +1,61 @@
+/*
+ * Adds readiness and liveless probes to Nginx.
+ * 
+ * Optional:
+ * 
+ * vars.livenessProbe.initialDelaySeconds
+ *     Defaults to 60.
+ * vars.readinessProbe.initialDelaySeconds
+ *     Defaults to 60.
+ * vars.httpHeaders[].name
+ * vars.httpHeaders[].value
+ * 
+ * Example:
+ * 
+ * import "http_probe.stg"
+ * 
+ * cc-keycloak-deploy-yaml(parent, vars) ::= <<
+ * apiVersion: extensions/v1beta1
+ * kind: Deployment
+ * ...
+ *       - image:
+ *         name:
+ *         ports:
+ *         - containerPort: 8080
+ *           name: http
+ *         <httpReadinessProbe(vars.keycloak)>
+ * ...
+ * >>
+ */
+
+/*
+ *
+ */
+httpReadinessProbe(vars) ::= <<
+livenessProbe:
+  tcpSocket:
+    port: 8080
+  initialDelaySeconds: <if(vars.livenessProbe.initialDelaySeconds)><vars.livenessProbe.initialDelaySeconds><else>60<endif>
+  periodSeconds: 60
+  timeoutSeconds: 10
+readinessProbe:
+  httpGet:
+    path: /
+    port: 8080
+    <httpHeaders(vars.httpHeaders)>
+  initialDelaySeconds: <if(vars.readinessProbe.initialDelaySeconds)><vars.readinessProbe.initialDelaySeconds><else>60<endif>
+  periodSeconds: 60
+  timeoutSeconds: 10
+>>
+
+httpHeaders(headers) ::= <<
+<if(headers)>
+httpHeaders:
+  <headers:httpHeader()>
+<endif>
+>>
+
+httpHeader(header) ::= <<
+- name: <header.name>
+  value: <header.value>
+>>
