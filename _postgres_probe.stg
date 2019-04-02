@@ -1,6 +1,12 @@
 /*
  * Adds readiness and liveless probes to PostgreSQL.
  * 
+ * The expected environment parameters are:
+ * - PGUSER
+ * - PGPASSWORD
+ * - PGDATABASE
+ * - PGHOST
+ * 
  * Example:
  * 
  * import "_postgres_probe.stg"
@@ -18,6 +24,27 @@
  *       containers:
  *       - image: <vars.postgres.image.name>:<vars.postgres.image.version>
  *         name: postgres
+ *         ports:
+ *         - containerPort: 5432
+ *           name: postgres
+ *         env:
+ *         - name: PGUSER
+ *           valueFrom:
+ *             secretKeyRef:
+ *               name: keycloak-<vars.keycloak.revision>
+ *               key: user
+ *         - name: PGPASSWORD
+ *           valueFrom:
+ *             secretKeyRef:
+ *               name: keycloak-<vars.keycloak.revision>
+ *               key: password
+ *         - name: PGDATABASE
+ *           valueFrom:
+ *             secretKeyRef:
+ *               name: keycloak-<vars.keycloak.revision>
+ *               key: database
+ *         - name: PGHOST
+ *           value: "127.0.0.1"
  *         <postgresReadinessProbe(parent, vars)>
  * ...
  * >>
@@ -29,16 +56,15 @@
 postgresReadinessProbe(parent, vars) ::= <<
 readinessProbe:
   timeoutSeconds: 3
-  initialDelaySeconds: 5
+  initialDelaySeconds: <if(vars.readinessProbe.initialDelaySeconds)><vars.readinessProbe.initialDelaySeconds><else>3<endif>
   exec:
     command:
-    - "/bin/sh"
-    - "-i"
-    - "-c"
-    - psql -h 127.0.0.1 -U $POSTGRES_USER -q -d $POSTGRES_DB -c 'SELECT 1'
+    - /bin/sh
+    - -c
+    - psql -c 'SELECT 1'
 livenessProbe:
-  timeoutSeconds: 1
-  initialDelaySeconds: 300
+  timeoutSeconds: 3
+  initialDelaySeconds: <if(vars.livenessProbe.initialDelaySeconds)><vars.livenessProbe.initialDelaySeconds><else>30<endif>
   tcpSocket:
-    port: 5432
+    port: postgres
 >>
