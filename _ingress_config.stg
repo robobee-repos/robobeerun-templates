@@ -6,20 +6,23 @@
  * import "_ingress_config.stg"
  * 
  * xx-site-ingress-yaml(parent, vars) ::= <<
+ * ---
  * apiVersion: extensions/v1beta1
  * kind: Ingress
  * metadata:
- *   name: site
- *   namespace: site-com
+ *   name: www-site-com
+ *   namespace: www-site-com
  *   labels:
  *     app: site
  *     tier: frontend
  *     deployment: site
  *   annotations:
- *     <ingressDefaultAnnotations(parent, vars, vars.site.nginx)>
+ *     <ingressDefaultAnnotations(vars.nginx)>
  * spec:
- *   <ingressDefaultSpec(parent, vars, vars.nginx, "wordpress")>
- * 
+ *   <ingressDefaultSpec(vars.wordpress, "www-site-com")>
+ * ---
+ * <ingressService(vars.nginx, "www-site-com", "wordpress", "www-site-com")>
+ * ---
  */
 
 /*
@@ -44,15 +47,13 @@ nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
  * 
  * Parameters:
  * 
- * vars additional variables.
- * name the name of the service.
- * 
  * Mandatory:
  *
  * vars.hosts[]
- *     the list of hosts.
+ *     The list of hosts.
  * name
- *     the service name.
+ *     The service name. It is expected that there is a certificate secret with
+ *     the name 'name-tls' available.
  * 
  */
 ingressDefaultSpec(vars, name) ::= <<

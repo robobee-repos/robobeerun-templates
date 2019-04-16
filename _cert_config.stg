@@ -11,10 +11,10 @@
  * apiVersion: certmanager.k8s.io/v1alpha1
  * kind: Certificate
  * metadata:
- *   name: site-com
- *   namespace: site-com
+ *   name: www-site-com
+ *   namespace: www-site-com
  * spec:
- *   <certDefaultSpecProd(vars.nginx, "site-com")>
+ *   <certDefaultSpecProd("www-site-com-tls", vars.hosts, vars.issuer)>
  *
  * >>
  */
@@ -22,82 +22,29 @@
 /*
  * Mandatory:
  *
- * vars.hosts[]
- *     the list of hosts.
  * name
- *     the secret name.
- * 
- */
-certDefaultSpecLetsencryptProd(vars, name) ::= <<
-<certDefaultSpecLetsencryptStage(vars, name, "prod")>
->>
-
-/*
- * Mandatory:
- *
- * vars.hosts[]
- *     the list of hosts.
- * name
- *     the secret name.
- * 
- */
-certDefaultSpecLetsencryptStaging(vars, name) ::= <<
-<certDefaultSpecLetsencryptStage(vars, name, "staging")>
->>
-
-/*
- * Mandatory:
- *
- * vars.hosts[]
- *     the list of hosts.
- * name
- *     the secret name.
- * stage
- *     the stage, either 'prod' or 'staging'.
- */
-certDefaultSpecLetsencryptStage(vars, name, stage) ::= <<
-secretName: <name>-tls
-issuerRef:
-  name: letsencrypt-<stage>
-  kind: ClusterIssuer
-commonName: <first(vars.hosts)>
-dnsNames:
-<rest(vars.hosts):certDomain();separator="\n">
-acme:
-  config:
-  - http01:
-      ingressClass: nginx
-    domains:
-    <vars.hosts:certDomain();separator="\n">
-
->>
-
-/*
- * Mandatory:
- *
- * vars.hosts[]
- *     the list of hosts.
- * name
- *     the secret name.
+ *     The secret name.
  * issuer
- *     the issuer name.
+ *     The issuer name.
+ * hosts[]
+ *     The list of hosts.
  */
-certDefaultSpec(vars, name, issuer) ::= <<
-secretName: <name>-tls
+certDefaultSpec(name, hosts, issuer) ::= <<
+secretName: <name>
 issuerRef:
   name: <issuer>
   kind: ClusterIssuer
-commonName: <first(vars.hosts)>
-<if(rest(vars.hosts))>
+commonName: <first(hosts)>
+<if(rest(hosts))>
 dnsNames:
-<rest(vars.hosts):certDomain();separator="\n">
+<rest(hosts):certDomain();separator="\n">
 <endif>
 acme:
   config:
   - http01:
       ingressClass: nginx
     domains:
-    <vars.hosts:certDomain();separator="\n">
+    <hosts:certDomain();separator="\n">
 
 >>
 
