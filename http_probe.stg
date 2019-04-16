@@ -3,10 +3,16 @@
  * 
  * Optional:
  * 
+ * vars.livenessProbe.port
+ *     Defaults to 8080.
  * vars.livenessProbe.initialDelaySeconds
  *     Defaults to 60.
+ * vars.readinessProbe.port
+ *     Defaults to 8080.
  * vars.readinessProbe.initialDelaySeconds
  *     Defaults to 60.
+ * vars.httpHeaders[]
+ *     A map of optional HTTP headers.
  * vars.httpHeaders[].name
  * vars.httpHeaders[].value
  * 
@@ -23,7 +29,7 @@
  *         ports:
  *         - containerPort: 8080
  *           name: http
- *         <httpReadinessProbe(vars.keycloak)>
+ *         <httpReadinessProbeGroup(vars.keycloak)>
  * ...
  * >>
  */
@@ -31,17 +37,17 @@
 /*
  *
  */
-httpReadinessProbe(vars) ::= <<
+httpReadinessProbeGroup(vars) ::= <<
 livenessProbe:
   tcpSocket:
-    port: 8080
+    port: <if(vars.livenessProbe.port)><vars.livenessProbe.port><else>8080<endif>
   initialDelaySeconds: <if(vars.livenessProbe.initialDelaySeconds)><vars.livenessProbe.initialDelaySeconds><else>60<endif>
   periodSeconds: 60
   timeoutSeconds: 10
 readinessProbe:
   httpGet:
     path: /
-    port: 8080
+    port: <if(vars.readinessProbe.port)><vars.readinessProbe.port><else>8080<endif>
     <httpHeaders(vars.httpHeaders)>
   initialDelaySeconds: <if(vars.readinessProbe.initialDelaySeconds)><vars.readinessProbe.initialDelaySeconds><else>60<endif>
   periodSeconds: 60
