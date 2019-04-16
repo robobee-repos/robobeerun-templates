@@ -1,0 +1,51 @@
+/*
+ * Generic TCP readiness and liveless probes.
+ * 
+ * Parameter:
+ * 
+ * vars.livenessProbe.port
+ * vars.livenessProbe.initialDelaySeconds
+ *     Defaults to 60.
+ * vars.readinessProbe.port
+ * vars.readinessProbe.initialDelaySeconds
+ *     Defaults to 60.
+ * 
+ * Example:
+ * 
+ * import "tcp_probe.stg"
+ * 
+ * cc-wordpress-deploy-yaml(parent, vars) ::= <<
+ * apiVersion: extensions/v1beta1
+ * kind: Deployment
+ * ...
+ *       - image:
+ *         name:
+ *         ports:
+ *         - containerPort: 9000
+ *           name: php
+ *         <tcpProbesGroup(vars.keycloak)>
+ * ...
+ * >>
+ */
+tcpProbesGroup(vars) ::= <<
+<tcpProbesPortGroup(vars, vars.livenessProbe.port, vars.readinessProbe.port)>
+>>
+
+/*
+ *
+ */
+tcpProbesPortGroup(vars, port) ::= <<
+livenessProbe:
+  tcpSocket:
+    port: <port>
+  initialDelaySeconds: <if(vars.livenessProbe.initialDelaySeconds)><vars.livenessProbe.initialDelaySeconds><else>60<endif>
+  periodSeconds: 60
+  timeoutSeconds: 10
+readinessProbe:
+  httpGet:
+    path: /
+    port: <port>
+  initialDelaySeconds: <if(vars.readinessProbe.initialDelaySeconds)><vars.readinessProbe.initialDelaySeconds><else>60<endif>
+  periodSeconds: 60
+  timeoutSeconds: 10
+>>
