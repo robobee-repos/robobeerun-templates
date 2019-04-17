@@ -19,9 +19,9 @@
  *   annotations:
  *     <ingressDefaultAnnotations(vars.nginx)>
  * spec:
- *   <ingressDefaultSpec(vars.wordpress, "www-site-com")>
+ *   <ingressDefaultSpec("www-site-com", vars.wordpress.hosts)>
  * ---
- * <ingressService(vars.nginx, "www-site-com", "wordpress", "www-site-com")>
+ * <ingressService("www-site-com", "wordpress", "www-site-com", vars.nginx)>
  * ---
  */
 
@@ -30,16 +30,16 @@
  * 
  * Optional:
  *
- * vars.clientMaxBodySize
+ * nginx.clientMaxBodySize
  *
  */
-ingressDefaultAnnotations(vars) ::= <<
+ingressDefaultAnnotations(nginx) ::= <<
 kubernetes.io/ingress.class: "nginx"
 nginx.ingress.kubernetes.io/affinity: "cookie"
 nginx.ingress.kubernetes.io/session-cookie-name: "route"
 nginx.ingress.kubernetes.io/session-cookie-hash: "sha1"
 nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
-<if(vars.clientMaxBodySize)>nginx.org/client-max-body-size: "<vars.clientMaxBodySize>"<endif>
+<if(nginx.clientMaxBodySize)>nginx.org/client-max-body-size: "<nginx.clientMaxBodySize>"<endif>
 >>
 
 /*
@@ -49,20 +49,20 @@ nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
  * 
  * Mandatory:
  *
- * vars.hosts[]
- *     The list of hosts.
  * name
  *     The service name. It is expected that there is a certificate secret with
  *     the name 'name-tls' available.
+ * hosts[]
+ *     The list of hosts.
  * 
  */
-ingressDefaultSpec(vars, name) ::= <<
+ingressDefaultSpec(name, hosts) ::= <<
 tls:
 - hosts:
-  <vars.hosts:{h|- <h>};separator="\n">
+  <hosts:{h|- <h>};separator="\n">
   secretName: <name>-tls
 rules:
-  <vars.hosts:hostRule(name);separator="\n">
+  <hosts:hostRule(name);separator="\n">
 >>
 
 hostRule(host, name) ::= <<
@@ -80,14 +80,14 @@ hostRule(host, name) ::= <<
  * 
  * Mandatory:
  * 
- * vars
- *     additional variables.
  * name
  *     the name of the service.
  * app
  *     the name of the application.
  * namespace
  *     the namespace of the service.
+ * vars
+ *     additional variables.
  * 
  * Optional:
  * 
@@ -95,7 +95,7 @@ hostRule(host, name) ::= <<
  *     the application port, defaults to 8080.
  * 
  */
-ingressService(vars, name, app, namespace) ::= <<
+ingressService(name, app, namespace, vars) ::= <<
 apiVersion: v1
 kind: Service
 metadata:
