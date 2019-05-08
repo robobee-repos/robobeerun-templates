@@ -35,6 +35,7 @@ livenessProbe:
   initialDelaySeconds: <if(nginx.initialDelaySeconds)><nginx.initialDelaySeconds><else>60<endif>
   periodSeconds: 60
   timeoutSeconds: 10
+<if(nginx.readinessProbeEnabled)>
 readinessProbe:
   httpGet:
     path: /
@@ -43,6 +44,7 @@ readinessProbe:
   initialDelaySeconds: 60
   periodSeconds: 60
   timeoutSeconds: 10
+<endif>
 >>
 
 httpHeaders(headers) ::= <<
