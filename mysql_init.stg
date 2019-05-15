@@ -1,0 +1,86 @@
+/*
+ * Adds a MySQL init container that will create the database user and database.
+ * 
+ * Parameter:
+ * 
+ * db.image.name
+ * db.image.version
+ * db.revision
+ * db.host
+ * db.port
+ * 
+ * Example:
+ * 
+ * import "mysql_init.stg"
+ * 
+ * cc-wordpress-deploy-yaml(parent, vars) ::= <<
+ * apiVersion: extensions/v1beta1
+ * kind: Deployment
+ * metadata:
+ * name: wordpress
+ * namespace: www-interscalar-com
+ * labels:
+ *   app: wordpress
+ *   tier: frontend
+ * spec:
+ * replicas: 1
+ * selector:
+ *   matchLabels:
+ *     app: wordpress
+ *     tier: frontend
+ * template:
+ *   metadata:
+ *     labels:
+ *       app: wordpress
+ *       tier: frontend
+ *   spec:
+ *     initContainers:
+ *     <mysqlInitDbGroup(vars.db)>
+ * ...
+ * >>
+ */
+mysqlInitDbGroup(db) ::= <<
+- name: init-db
+  image: <db.image.name>:<db.image.version>
+  env:
+  - name: MYSQL_USER
+    valueFrom:
+      secretKeyRef:
+        name: db-<db.revision>
+        key: user
+  - name: MYSQL_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: db-<db.revision>
+        key: password
+  - name: MYSQL_DATABASE
+    valueFrom:
+      secretKeyRef:
+        name: db-<db.revision>
+        key: database
+  - name: MYSQL_ADMIN_USER
+    valueFrom:
+      secretKeyRef:
+        name: db-<db.revision>
+        key: admin_user
+  - name: MYSQL_ADMIN_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: db-<db.revision>
+        key: admin_password
+  - name: MYSQL_HOST
+    value: <db.host>
+  - name: MYSQL_PORT
+    value: "<db.port>"
+  command:
+  - /bin/sh
+  - -i
+  - -c
+  - >
+    while ! mysql -u${MYSQL_ADMIN_USER} -p${MYSQL_ADMIN_PASSWORD} -h${MYSQL_HOST} -P${MYSQL_PORT} -e "SELECT 1;"; do sleep 3; done;
+    mysql -u${MYSQL_ADMIN_USER} -p${MYSQL_ADMIN_PASSWORD} -h${MYSQL_HOST} -P${MYSQL_PORT} -e "CREATE USER '${MYSQL_USER}' IDENTIFIED BY '${MYSQL_PASSWORD}';";
+    mysql -u${MYSQL_ADMIN_USER} -p${MYSQL_ADMIN_PASSWORD} -h${MYSQL_HOST} -P${MYSQL_PORT} -e "GRANT USAGE ON *.* TO '${MYSQL_USER}'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';";
+    mysql -u${MYSQL_ADMIN_USER} -p${MYSQL_ADMIN_PASSWORD} -h${MYSQL_HOST} -P${MYSQL_PORT} -e "GRANT ALL privileges ON ${MYSQL_DATABASE}.* TO '${MYSQL_USER}'@'%';";
+    mysql -u${MYSQL_ADMIN_USER} -p${MYSQL_ADMIN_PASSWORD} -h${MYSQL_HOST} -P${MYSQL_PORT} -e "FLUSH PRIVILEGES;";
+    mysql -u${MYSQL_ADMIN_USER} -p${MYSQL_ADMIN_PASSWORD} -h${MYSQL_HOST} -P${MYSQL_PORT} -e "SHOW GRANTS FOR '${MYSQL_USER}'@'%';";
+>>
