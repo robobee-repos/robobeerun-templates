@@ -42,8 +42,7 @@ livenessProbe:
   periodSeconds: 60
   timeoutSeconds: 10
 readinessProbe:
-  httpGet:
-    path: /
+  tcpSocket:
     port: <port>
   initialDelaySeconds: <if(vars.readinessProbe.initialDelaySeconds)><vars.readinessProbe.initialDelaySeconds><else>60<endif>
   periodSeconds: 60
