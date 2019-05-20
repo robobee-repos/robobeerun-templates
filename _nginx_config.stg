@@ -223,6 +223,17 @@ location ~* ^.+\.(?:css|js|jpe?g|gif|htc|ico|png|html)$ {
 /*
  *
  */
+nginxLocationStaticFilesRoot(parent, vars, root) ::= <<
+## All static files will be served directly.
+location ~* ^.+\.(?:css|js|jpe?g|gif|htc|ico|png|html)$ {
+    root <root>;
+    <nginxLocationStaticFilesConfig(parent, vars)>
+}
+>>
+
+/*
+ *
+ */
 nginxLocationStaticFilesConfig(parent, vars) ::= <<
 #access_log off;
 expires 30d;
