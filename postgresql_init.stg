@@ -1,0 +1,81 @@
+/*
+ * Adds a PostgreSQL init container that will create the database user and 
+ * database.
+ * 
+ * Parameter:
+ * 
+ * db.image.name
+ * db.image.version
+ * db.revision
+ * db.host
+ * db.port
+ * db.schema
+ * 
+ * Example:
+ * 
+ * import "postgresql_init.stg"
+ * 
+ * cc-keycloak-deploy-yaml(parent, vars) ::= <<
+ * apiVersion: extensions/v1beta1
+ * kind: Deployment
+ * metadata:
+ * name: keycloak
+ * namespace: keycloak
+ * labels:
+ *   app: keycloak
+ * spec:
+ * replicas: 1
+ * selector:
+ *   matchLabels:
+ *     app: keycloak
+ * template:
+ *   metadata:
+ *     labels:
+ *       app: keycloak
+ *   spec:
+ *     initContainers:
+ *     <postgresInitDbGroup(vars.db)>
+ * ...
+ * >>
+ */
+postgresInitDbGroup(db) ::= <<
+- name: init-db
+  image: <vars.db.image.name>:<vars.db.image.version>
+  env:
+  - name: POSTGRESQL_USER
+    valueFrom:
+      secretKeyRef:
+        name: db-<vars.revision>
+        key: user
+  - name: POSTGRESQL_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: db-<vars.revision>
+        key: password
+  - name: POSTGRESQL_DATABASE
+    valueFrom:
+      secretKeyRef:
+        name: db-<vars.revision>
+        key: database
+  - name: POSTGRESQL_ADMIN_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: db-<vars.revision>
+        key: admin_password
+  - name: PGHOST
+    value: <vars.db.host>
+  - name: PGPORT
+    value: "5432"
+  - name: PGUSER
+    value: "postgres"
+  command:
+  - /bin/sh
+  - -i
+  - -c
+  - >
+    while ! PGPASSWORD=${POSTGRESQL_ADMIN_PASSWORD} psql "postgresql://${PGUSER}@${PGHOST}" -c "SELECT 1;"; do sleep 3; done;
+    PGPASSWORD=${POSTGRESQL_ADMIN_PASSWORD} createuser $POSTGRESQL_USER;
+    PGPASSWORD=${POSTGRESQL_ADMIN_PASSWORD} createdb --owner=$POSTGRESQL_USER $POSTGRESQL_DATABASE;
+    PGPASSWORD=${POSTGRESQL_ADMIN_PASSWORD} psql --command "ALTER USER \"${POSTGRESQL_USER}\" WITH ENCRYPTED PASSWORD '${POSTGRESQL_PASSWORD}';";
+    PGPASSWORD=${POSTGRESQL_ADMIN_PASSWORD} psql --command "ALTER SCHEMA <vars.db.schema> OWNER TO ${POSTGRESQL_USER};";
+>>
