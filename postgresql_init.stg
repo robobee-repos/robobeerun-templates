@@ -40,30 +40,30 @@
  */
 postgresInitDbGroup(db) ::= <<
 - name: init-db
-  image: <vars.db.image.name>:<vars.db.image.version>
+  image: <db.image.name>:<db.image.version>
   env:
   - name: POSTGRESQL_USER
     valueFrom:
       secretKeyRef:
-        name: db-<vars.revision>
+        name: db-<db.revision>
         key: user
   - name: POSTGRESQL_PASSWORD
     valueFrom:
       secretKeyRef:
-        name: db-<vars.revision>
+        name: db-<db.revision>
         key: password
   - name: POSTGRESQL_DATABASE
     valueFrom:
       secretKeyRef:
-        name: db-<vars.revision>
+        name: db-<db.revision>
         key: database
   - name: POSTGRESQL_ADMIN_PASSWORD
     valueFrom:
       secretKeyRef:
-        name: db-<vars.revision>
+        name: db-<db.revision>
         key: admin_password
   - name: PGHOST
-    value: <vars.db.host>
+    value: <db.host>
   - name: PGPORT
     value: "5432"
   - name: PGUSER
@@ -77,5 +77,5 @@ postgresInitDbGroup(db) ::= <<
     PGPASSWORD=${POSTGRESQL_ADMIN_PASSWORD} createuser $POSTGRESQL_USER;
     PGPASSWORD=${POSTGRESQL_ADMIN_PASSWORD} createdb --owner=$POSTGRESQL_USER $POSTGRESQL_DATABASE;
     PGPASSWORD=${POSTGRESQL_ADMIN_PASSWORD} psql --command "ALTER USER \"${POSTGRESQL_USER}\" WITH ENCRYPTED PASSWORD '${POSTGRESQL_PASSWORD}';";
-    PGPASSWORD=${POSTGRESQL_ADMIN_PASSWORD} psql --command "ALTER SCHEMA <vars.db.schema> OWNER TO ${POSTGRESQL_USER};";
+    PGPASSWORD=${POSTGRESQL_ADMIN_PASSWORD} psql --command "ALTER SCHEMA <db.schema> OWNER TO ${POSTGRESQL_USER};";
 >>
