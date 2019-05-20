@@ -3,7 +3,9 @@
  * 
  * Optional:
  * 
- * nginx.initialDelaySeconds
+ * nginx.livenessProbe.initialDelaySeconds
+ * nginx.readinessProbe.enabled
+ * nginx.readinessProbe.initialDelaySeconds
  * nginx.httpHeaders[].name
  * nginx.httpHeaders[].value
  * 
@@ -32,16 +34,16 @@ nginxReadinessProbe(parent, vars, nginx) ::= <<
 livenessProbe:
   tcpSocket:
     port: 8080
-  initialDelaySeconds: <if(nginx.initialDelaySeconds)><nginx.initialDelaySeconds><else>60<endif>
+  initialDelaySeconds: <if(nginx.livenessProbe.initialDelaySeconds)><nginx.livenessProbe.initialDelaySeconds><else>60<endif>
   periodSeconds: 60
   timeoutSeconds: 10
-<if(nginx.readinessProbeEnabled)>
+<if(nginx.readinessProbe||nginx.readinessProbe.enabled)>
 readinessProbe:
   httpGet:
     path: /
     port: 8080
     <httpHeaders(nginx.httpHeaders)>
-  initialDelaySeconds: 60
+  initialDelaySeconds: <if(nginx.readinessProbe.initialDelaySeconds)><nginx.readinessProbe.initialDelaySeconds><else>60<endif>
   periodSeconds: 60
   timeoutSeconds: 10
 <endif>
