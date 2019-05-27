@@ -3,9 +3,9 @@
  * 
  * Example for Wordpress:
  *
- * import "_nginx_config.stg"
+ * import "robobeerun-templates/nginx_config.stg"
  * 
- * cc-wordpress-deploy-yaml(parent, vars) ::= <<
+ * cc-wordpress-deploy-yaml() ::= <<
  * apiVersion: v1
  * kind: ConfigMap
  * metadata:
@@ -13,30 +13,28 @@
  *   namespace: site-com
  *   labels:
  *     app: nginx
- *     tier: frontend
- *     group: site-com
  * data:
  *   nginx.conf: |
- *     <nginxDefaults(parent, vars, vars.nginx)>
+ *     <nginxDefaults(vars.nginx)>
  *     http {
- *         <nginxHttpDefaults(parent, vars, vars.nginx)>
- *         <nginxVirtualHosts(parent, vars, vars.nginx.hosts)>
+ *         <nginxHttpDefaults(vars.nginx)>
+ *         <nginxVirtualHosts(vars.nginx.hosts)>
  *         server {
  *             listen 8080 default_server;
  *             listen [::]:8080 default_server;
  *             server_name <first(vars.nginx.hosts)>;
  *             root /var/www/html/public;
  *             index index.php;
- *             <nginxLocationFavicon(parent, vars)>
- *             <nginxLocationRobots(parent, vars)>
- *             <nginxLocationHidden(parent, vars)>
- *             <nginxLocationUpload(parent, vars)>
+ *             <nginxLocationFavicon()>
+ *             <nginxLocationRobots()>
+ *             <nginxLocationHidden()>
+ *             <nginxLocationUpload()>
  *             ## All static files will be served directly.
  *             location ~* \.(js|css|png|jpg|jpeg|gif|ico)$ {
- *                 <nginxLocationStaticFilesConfig(parent, vars)>
+ *                 <nginxLocationStaticFilesConfig()>
  *             }
- *             <nginxRootFastcgiPassLocation(parent, vars, vars.wordpress)>
- *             <nginxLocationPhpPingLocation(parent, vars)>
+ *             <nginxRootFastcgiPassLocation(vars.wordpress)>
+ *             <nginxLocationPhpPingLocation()>
  *         }
  *     }
  * 
@@ -44,42 +42,40 @@
  * 
  * Example for Redmine:
  *
- * import "_nginx_config.stg"
+ * import "robobeerun-templates/nginx_config.stg"
  * 
- * cc-redmine-app-deploy-yaml(parent, vars) ::= <<
+ * cc-redmine-app-deploy-yaml() ::= <<
  * apiVersion: v1
  * kind: ConfigMap
  * metadata:
- *   name: redmine-nginx-<vars.revision>
+ *   name: nginx-config-<vars.revision>
  *   namespace: site-com
  *   labels:
  *     app: nginx
- *     tier: frontend
- *     group: site-com
  * data:
  *   nginx.conf: |
- *     <nginxDefaults(parent, vars, vars.nginx)>
+ *     <nginxDefaults(vars.nginx)>
  *     http {
- *         <nginxHttpDefaults(parent, vars, vars.nginx)>
+ *         <nginxHttpDefaults(vars.nginx)>
  *         upstream backend {
  *             server 127.0.0.1:3000 max_fails=3 fail_timeout=<vars.nginx.readTimeout>;
  *         }
- *         <nginxVirtualHosts(parent, vars, vars.nginx.hosts)>
+ *         <nginxVirtualHosts(vars.nginx.hosts)>
  *         server {
  *             listen 8080 default_server;
  *             listen [::]:8080 default_server;
  *             server_name <first(vars.nginx.hosts)>;
  *             root /var/www/html/public;
  *             index index.php;
- *             <nginxLocationFavicon(parent, vars)>
- *             <nginxLocationRobots(parent, vars)>
- *             <nginxLocationHidden(parent, vars)>
- *             <nginxLocationGitFiles(parent, vars)>
+ *             <nginxLocationFavicon()>
+ *             <nginxLocationRobots()>
+ *             <nginxLocationHidden()>
+ *             <nginxLocationGitFiles()>
  *             ## All static files will be served directly.
  *             location ~* ^(?:(?:help\/)|(?:images\/)|(?:javascripts\/)|(?:plugin_assets\/)|(?:stylesheets\/)|(?:themes\/)).+\.(?:css|js|jpe?g|gif|htc|ico|png|html)$ {
- *                 <nginxLocationStaticFilesConfig(parent, vars)>
+ *                 <nginxLocationStaticFilesConfig()>
  *             }
- *             <nginxRootProxyPassBackendLocation(parent, vars, vars.nginx)>
+ *             <nginxRootProxyPassBackendLocation(vars.nginx)>
  *         }
  *     }
  * 
@@ -93,7 +89,7 @@
  * nginx.workerConnections
  *
  */
-nginxDefaults(parent, vars, nginx) ::= <<
+nginxDefaults(nginx) ::= <<
 worker_processes <nginx.workerProcesses>;
 error_log /var/log/nginx/error.log warn;
 pid /var/run/nginx.pid;
@@ -108,7 +104,7 @@ events {
  * nginx.clientMaxBodySize
  *
  */
-nginxHttpDefaults(parent, vars, nginx) ::= <<
+nginxHttpDefaults(nginx) ::= <<
 include /etc/nginx/mime.types;
 default_type application/octet-stream;
 log_format   main '$remote_addr - $remote_user [$time_local]  $status '
@@ -133,7 +129,7 @@ real_ip_header X-Forwarded-For;
 /*
  *
  */
-nginxHttpServerSecurityHeaders(parent, vars) ::= <<
+nginxHttpServerSecurityHeaders() ::= <<
 # Add headers to serve security related headers
 # Before enabling Strict-Transport-Security headers please read into this
 # topic first.
@@ -158,7 +154,7 @@ add_header X-Permitted-Cross-Domain-Policies none;
  * nginx.readTimeout
  *
  */
-nginxRootProxyPassBackendLocationConfig(parent, vars, nginx) ::= <<
+nginxRootProxyPassBackendLocationConfig(nginx) ::= <<
 proxy_read_timeout      <nginx.readTimeout>;
 proxy_connect_timeout   <nginx.readTimeout>;
 proxy_redirect      off;
@@ -173,14 +169,14 @@ proxy_pass          http://backend;
 /*
  * 
  */
-nginxVirtualHosts(parent, vars, hosts) ::= <<
-  <rest(hosts):redirectHost(parent, vars, hosts);separator="\n">
+nginxVirtualHosts(hosts) ::= <<
+  <rest(hosts):redirectHost(hosts);separator="\n">
 >>
 
 /*
  * 
  */
-redirectHost(host, parent, vars, hosts) ::= <<
+redirectHost(host, hosts) ::= <<
 server {
   root /var/www/html;
   listen 8080;
@@ -193,48 +189,48 @@ server {
 /*
  *
  */
-nginxDefaultLocations(parent, vars) ::= <<
-<nginxLocationStaticFiles(parent, vars)>
-<nginxLocationFavicon(parent, vars)>
-<nginxLocationRobots(parent, vars)>
-<nginxLocationHidden(parent, vars)>
+nginxDefaultLocations() ::= <<
+<nginxLocationStaticFiles()>
+<nginxLocationFavicon()>
+<nginxLocationRobots()>
+<nginxLocationHidden()>
 >>
 
 /*
  *
  */
-nginxRootProxyPassBackendLocation(parent, vars, nginx) ::= <<
+nginxRootProxyPassBackendLocation(nginx) ::= <<
 #
 location / {
-  <nginxRootProxyPassBackendLocationConfig(parent, vars, nginx)>
+  <nginxRootProxyPassBackendLocationConfig(nginx)>
 }
 >>
 
 /*
  *
  */
-nginxLocationStaticFiles(parent, vars) ::= <<
+nginxLocationStaticFiles() ::= <<
 ## All static files will be served directly.
 location ~* ^.+\.(?:css|js|jpe?g|gif|htc|ico|png|html)$ {
-    <nginxLocationStaticFilesConfig(parent, vars)>
+    <nginxLocationStaticFilesConfig()>
 }
 >>
 
 /*
  *
  */
-nginxLocationStaticFilesRoot(parent, vars, root) ::= <<
+nginxLocationStaticFilesRoot(root) ::= <<
 ## All static files will be served directly.
 location ~* ^.+\.(?:css|js|jpe?g|gif|htc|ico|png|html)$ {
     root <root>;
-    <nginxLocationStaticFilesConfig(parent, vars)>
+    <nginxLocationStaticFilesConfig()>
 }
 >>
 
 /*
  *
  */
-nginxLocationStaticFilesConfig(parent, vars) ::= <<
+nginxLocationStaticFilesConfig() ::= <<
 #access_log off;
 expires 30d;
 ## No need to bleed constant updates.
@@ -250,7 +246,7 @@ open_file_cache_errors off;
 /*
  *
  */
-nginxLocationFavicon(parent, vars) ::= <<
+nginxLocationFavicon() ::= <<
 ## Support for favicon.
 ## Return an 1x1 transparent GIF if it doesn't exist.
 location = /favicon.ico {
@@ -270,7 +266,7 @@ location @empty {
 /*
  *
  */
-nginxLocationRobots(parent, vars) ::= <<
+nginxLocationRobots() ::= <<
 #
 location = /robots.txt {
   allow all;
@@ -279,7 +275,7 @@ location = /robots.txt {
 }
 >>
 
-nginxLocationHidden(parent, vars) ::= <<
+nginxLocationHidden() ::= <<
 # Deny all attempts to access hidden files such as .htaccess, .htpasswd, .DS_Store (Mac).
 # Keep logging the requests to parse later (or to pass to firewall utilities such as fail2ban)
 location ~ /\. {
@@ -287,14 +283,14 @@ location ~ /\. {
 }
 >>
 
-nginxLocationGitFiles(parent, vars) ::= <<
+nginxLocationGitFiles() ::= <<
 ## Protect .git files.
 location ^~ /.git {
     return 404;
 }
 >>
 
-nginxLocationUpload(parent, vars) ::= <<
+nginxLocationUpload() ::= <<
 # Deny access to any files with a .php extension in the uploads directory
 # Works in sub-directory installs and also in multisite network
 # Keep logging the requests to parse later (or to pass to firewall utilities such as fail2ban)
@@ -308,7 +304,7 @@ location ~* /(?:uploads|files)/.*\.php$ {
  * 
  * nginx.php.maxExecutionTime
  */
-nginxRootFastcgiPassLocation(parent, vars, nginx) ::= <<
+nginxRootFastcgiPassLocation(nginx) ::= <<
 # First attempt to serve request as file, then
 # as directory, then try php script.
 location / {
@@ -326,7 +322,7 @@ fastcgi_send_timeout <nginx.php.maxExecutionTime>;
 }
 >>
 
-nginxLocationPhpPingLocation(parent, vars) ::= <<
+nginxLocationPhpPingLocation() ::= <<
 # php-fpm ping and status.
 location ~ ^/(phpstatus|ping)$ {
     fastcgi_pass   127.0.0.1:9000;

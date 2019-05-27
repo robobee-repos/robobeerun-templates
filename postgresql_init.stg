@@ -13,7 +13,7 @@
  * 
  * Example:
  * 
- * import "postgresql_init.stg"
+ * import "robobeerun-templates/postgresql_init.stg"
  * 
  * cc-keycloak-deploy-yaml(parent, vars) ::= <<
  * apiVersion: extensions/v1beta1

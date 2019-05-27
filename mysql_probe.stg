@@ -1,33 +1,41 @@
 /*
  * Adds readuness and liveless probes to Mariadb/MySQL.
  * 
+ * Optional:
+ * 
+ * probe.livenessProbe.initialDelaySeconds
+ *    Defaults to 30.
+ * 
+ * probe.readinessProbe.initialDelaySeconds
+ *    Defaults to 30.
+ * 
  * Example:
  * 
- * import "_mysql_probe.stg"
+ * import "robobeerun-templates/mysql_probe.stg"
  * 
  * cc-db-deploy-yaml(parent, vars) ::= <<
  * apiVersion: extensions/v1beta1
  * kind: Deployment
  * ...
- *         <mariadbReadinessProbe(parent, vars)>
+ *         <mariadbReadinessProbe(vars.db)>
  * >>
  */
 
 /*
  *
  */
-mariadbReadinessProbe(parent, vars) ::= <<
-<mysqlReadinessProbe(parent, vars)>
+mariadbReadinessProbe(probe) ::= <<
+<mysqlReadinessProbe(probe)>
 >>
 
 /*
  *
  */
-mysqlReadinessProbe(parent, vars) ::= <<
+mysqlReadinessProbe(probe) ::= <<
 livenessProbe:
   tcpSocket:
     port: 3306
-  initialDelaySeconds: <if(vars.initialDelaySeconds)><vars.initialDelaySeconds><else>30<endif>
+  initialDelaySeconds: <if(probe.livenessProbe.initialDelaySeconds)><probe.livenessProbe.initialDelaySeconds><else>30<endif>
   periodSeconds: 60
   timeoutSeconds: 10
 readinessProbe:
@@ -37,7 +45,7 @@ readinessProbe:
     - -i
     - -c
     - MYSQL_PWD="$MYSQL_PASSWORD" mysql -h 127.0.0.1 -u $MYSQL_USER -D $MYSQL_DATABASE -e 'SELECT 1'
-  initialDelaySeconds: <if(vars.initialDelaySeconds)><vars.initialDelaySeconds><else>30<endif>
+  initialDelaySeconds: <if(probe.readinessProbe.initialDelaySeconds)><probe.readinessProbe.initialDelaySeconds><else>30<endif>
   periodSeconds: 60
   timeoutSeconds: 10
 >>

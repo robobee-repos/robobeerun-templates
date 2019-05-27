@@ -3,7 +3,7 @@
  * 
  * Example:
  * 
- * import "_ingress_config.stg"
+ * import "robobeerun-templates/ingress_config.stg"
  * 
  * xx-site-ingress-yaml(parent, vars) ::= <<
  * ---
@@ -14,8 +14,6 @@
  *   namespace: www-site-com
  *   labels:
  *     app: site
- *     tier: frontend
- *     deployment: site
  *   annotations:
  *     <ingressDefaultAnnotations(vars.nginx)>
  * spec:

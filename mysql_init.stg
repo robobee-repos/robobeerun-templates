@@ -11,7 +11,7 @@
  * 
  * Example:
  * 
- * import "mysql_init.stg"
+ * import "robobeerun-templates/mysql_init.stg"
  * 
  * cc-wordpress-deploy-yaml(parent, vars) ::= <<
  * apiVersion: extensions/v1beta1
@@ -21,18 +21,15 @@
  * namespace: www-interscalar-com
  * labels:
  *   app: wordpress
- *   tier: frontend
  * spec:
  * replicas: 1
  * selector:
  *   matchLabels:
  *     app: wordpress
- *     tier: frontend
  * template:
  *   metadata:
  *     labels:
  *       app: wordpress
- *       tier: frontend
  *   spec:
  *     initContainers:
  *     <mysqlInitDbGroup(vars.db)>

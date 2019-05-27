@@ -18,7 +18,7 @@
  * 
  * Example:
  * 
- * import "http_probe.stg"
+ * import "robobeerun-templates/http_probe.stg"
  * 
  * cc-keycloak-deploy-yaml(parent, vars) ::= <<
  * apiVersion: extensions/v1beta1

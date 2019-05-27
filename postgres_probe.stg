@@ -1,6 +1,14 @@
 /*
  * Adds readiness and liveless probes to PostgreSQL.
  * 
+ * Optional:
+ * 
+ * probe.livenessProbe.initialDelaySeconds
+ *    Defaults to 30.
+ * 
+ * probe.readinessProbe.initialDelaySeconds
+ *    Defaults to 30.
+ * 
  * The expected environment parameters are:
  * - PGUSER
  * - PGPASSWORD
@@ -9,7 +17,7 @@
  * 
  * Example:
  * 
- * import "_postgres_probe.stg"
+ * import "robobeerun-templates/postgres_probe.stg"
  * 
  * cc-db-deploy-yaml(parent, vars) ::= <<
  * apiVersion: extensions/v1beta1
@@ -45,7 +53,7 @@
  *               key: database
  *         - name: PGHOST
  *           value: "127.0.0.1"
- *         <postgresReadinessProbe(parent, vars)>
+ *         <postgresReadinessProbe(vars.db)>
  * ...
  * >>
  */
@@ -53,10 +61,10 @@
 /*
  *
  */
-postgresReadinessProbe(parent, vars) ::= <<
+postgresReadinessProbe(probe) ::= <<
 readinessProbe:
   timeoutSeconds: 3
-  initialDelaySeconds: <if(vars.readinessProbe.initialDelaySeconds)><vars.readinessProbe.initialDelaySeconds><else>3<endif>
+  initialDelaySeconds: <if(probe.readinessProbe.initialDelaySeconds)><probe.readinessProbe.initialDelaySeconds><else>3<endif>
   exec:
     command:
     - /bin/sh
@@ -64,7 +72,7 @@ readinessProbe:
     - psql -c 'SELECT 1'
 livenessProbe:
   timeoutSeconds: 3
-  initialDelaySeconds: <if(vars.livenessProbe.initialDelaySeconds)><vars.livenessProbe.initialDelaySeconds><else>30<endif>
+  initialDelaySeconds: <if(probe.livenessProbe.initialDelaySeconds)><probe.livenessProbe.initialDelaySeconds><else>30<endif>
   tcpSocket:
     port: postgres
 >>

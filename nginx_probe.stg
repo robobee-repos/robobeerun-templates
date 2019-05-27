@@ -11,7 +11,7 @@
  * 
  * Example:
  * 
- * import "_nginx_probe.stg"
+ * import "robobeerun-templates/nginx_probe.stg"
  * 
  * cc-nginx-deploy-yaml(parent, vars) ::= <<
  * apiVersion: extensions/v1beta1
@@ -22,7 +22,7 @@
  *         ports:
  *         - containerPort: 8080
  *           name: "http"
- *        <nginxReadinessProbe(parent, vars, vars.nginx.initialDelaySeconds)>
+ *        <nginxReadinessProbe(vars.nginx.initialDelaySeconds)>
  * ...
  * >>
  */
@@ -30,7 +30,7 @@
 /*
  *
  */
-nginxReadinessProbe(parent, vars, nginx) ::= <<
+nginxReadinessProbe(nginx) ::= <<
 livenessProbe:
   tcpSocket:
     port: 8080

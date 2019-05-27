@@ -12,7 +12,7 @@
  * 
  * Example:
  * 
- * import "_affinities.stg"
+ * import "robobeerun-templates/affinities.stg"
  * 
  * bb-site-wordpress-yaml(parent, vars) ::= <<
  * apiVersion: extensions/v1beta1
@@ -22,32 +22,25 @@
  *   namespace: site-com
  *   labels:
  *     app: wordpress
- *     tier: frontend
- *     group: site-com
  * spec:
  *   replicas: 1
  *   selector:
  *     matchLabels:
  *       app: wordpress
- *       tier: frontend
- *       group: site-com
  *   template:
  *     metadata:
  *       labels:
  *        app: wordpress
- *         tier: frontend
- *         group: site-com
  *     spec:
  *       containers:
  *       - image: <vars.wordpress.image.name>:<vars.wordpress.image.version>
- * ...
- *       <affinitiesGroup(parent, vars, vars.wordpress.affinity)>
+ *       <affinitiesGroup(vars.wordpress.affinity)>
  * >>
  * 
  */
-affinitiesGroup(parent, vars, affinity) ::= <%
+affinitiesGroup(affinity) ::= <%
 <if(affinity)>
-<affinitiesSection(parent, vars, affinity)>
+<affinitiesSection(affinity)>
 <endif>
 %>
 
@@ -63,7 +56,7 @@ affinitiesGroup(parent, vars, affinity) ::= <%
  *
  * affinity.required
  */
-affinitiesSection(parent, vars, affinity) ::= <<
+affinitiesSection(affinity) ::= <<
 affinity:
   nodeAffinity:
 <if(affinity.required)>

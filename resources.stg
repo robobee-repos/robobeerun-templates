@@ -10,7 +10,7 @@
  *
  * Example:
  * 
- * import "_resources.stg"
+ * import "robobeerun-templates/resources.stg"
  * 
  * bb-site-wordpress-yaml(parent, vars) ::= <<
  * apiVersion: extensions/v1beta1
@@ -28,7 +28,7 @@
  * 
  */
 
-resourcesGroup(parent, vars, limitsRequests) ::= <<
+resourcesGroup(limitsRequests) ::= <<
 resources:
 <if(limitsRequests.limits)>
   limits:

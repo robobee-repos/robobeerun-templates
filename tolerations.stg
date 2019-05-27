@@ -3,7 +3,7 @@
  *
  * Example:
  * 
- * import "_resources.stg"
+ * import "robobeerun-templates/tolerations.stg"
  * 
  * bb-site-wordpress-yaml(parent, vars) ::= <<
  * apiVersion: extensions/v1beta1
@@ -31,22 +31,21 @@
  *     spec:
  *       containers:
  *       - image: <vars.wordpress.image.name>:<vars.wordpress.image.version>
- * ...
- *       <tolerationMasterGroup(parent, vars, vars.wordpress.allowOnMaster)>
- *       <tolerationsGroup(parent, vars, vars.wordpress.tolerations, vars.wordpress.allowOnMaster)>
+ *       <tolerationMasterGroup(vars.wordpress.allowOnMaster)>
+ *       <tolerationsGroup(vars.wordpress.tolerations, vars.wordpress.allowOnMaster)>
  * >>
  */
-tolerationMasterGroup(parent, vars, allowOnMaster) ::= <<
+tolerationMasterGroup(allowOnMaster) ::= <<
 <if(allowOnMaster)>
 tolerations:
-  <tolerationMasterEntry(parent, vars, allowOnMaster)>
+  <tolerationMasterEntry(allowOnMaster)>
 <endif>
 >>
 
 /*
  * Adds toleration entry so the pod can run on the master nodes.
  */
-tolerationMasterEntry(parent, vars, allowOnMaster) ::= <<
+tolerationMasterEntry(allowOnMaster) ::= <<
 <if(allowOnMaster)>
 - effect: NoSchedule
   key: node-role.kubernetes.io/master
@@ -63,18 +62,18 @@ tolerationMasterEntry(parent, vars, allowOnMaster) ::= <<
  * tolerations[].effect
  * tolerations[].value
  */
-tolerationsGroup(parent, vars, tolerations, allowOnMaster) ::= <<
-<tolerationsHeader(parent, vars, tolerations, allowOnMaster)>
-  <tolerationEntries(parent, vars, tolerations)>
+tolerationsGroup(tolerations, allowOnMaster) ::= <<
+<tolerationsHeader(tolerations, allowOnMaster)>
+  <tolerationEntries(tolerations)>
 >>
 
-tolerationsHeader(parent, vars, tolerations, allowOnMaster) ::= <%
+tolerationsHeader(tolerations, allowOnMaster) ::= <%
 <if(!allowOnMaster&&tolerations)>
 tolerations:
 <endif>
 %>
 
-tolerationEntries(parent, vars, tolerations) ::= <<
+tolerationEntries(tolerations) ::= <<
 <tolerations:tolerationEntry();separator="\n">
 >>
 
