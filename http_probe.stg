@@ -4,11 +4,11 @@
  * Optional:
  * 
  * vars.livenessProbe.port
- *     Defaults to 8080.
+ *     Defaults to http.
  * vars.livenessProbe.initialDelaySeconds
  *     Defaults to 60.
  * vars.readinessProbe.port
- *     Defaults to 8080.
+ *     Defaults to http.
  * vars.readinessProbe.initialDelaySeconds
  *     Defaults to 60.
  * vars.httpHeaders[]
@@ -40,14 +40,14 @@
 httpReadinessProbeGroup(vars) ::= <<
 livenessProbe:
   tcpSocket:
-    port: <if(vars.livenessProbe.port)><vars.livenessProbe.port><else>8080<endif>
+    port: <if(vars.livenessProbe.port)><vars.livenessProbe.port><else>http<endif>
   initialDelaySeconds: <if(vars.livenessProbe.initialDelaySeconds)><vars.livenessProbe.initialDelaySeconds><else>60<endif>
   periodSeconds: 60
   timeoutSeconds: 10
 readinessProbe:
   httpGet:
     path: /
-    port: <if(vars.readinessProbe.port)><vars.readinessProbe.port><else>8080<endif>
+    port: <if(vars.readinessProbe.port)><vars.readinessProbe.port><else>http<endif>
     <httpHeaders(vars.httpHeaders)>
   initialDelaySeconds: <if(vars.readinessProbe.initialDelaySeconds)><vars.readinessProbe.initialDelaySeconds><else>60<endif>
   periodSeconds: 60
