@@ -29,13 +29,14 @@
  * Optional:
  *
  * nginx.clientMaxBodySize
+ * nginx.fromToWwwRedirect
  *
  */
 ingressDefaultAnnotations(nginx) ::= <<
 kubernetes.io/ingress.class: "nginx"
 nginx.ingress.kubernetes.io/affinity: "cookie"
 nginx.ingress.kubernetes.io/session-cookie-name: "route"
-nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
+<if(nginx.fromToWwwRedirect)>nginx.ingress.kubernetes.io/from-to-www-redirect: "true"<endif>
 <if(nginx.clientMaxBodySize)>nginx.ingress.kubernetes.io/proxy-body-size: "<nginx.clientMaxBodySize>"<endif>
 >>
 
